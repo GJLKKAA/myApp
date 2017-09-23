@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <title>hellocanvas</title>
+<body>
+
+<canvas id="myCanvas" width="500" height="300" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+<div id="div1" />
+<script>
+
+var c=document.getElementById("myCanvas");
+var ctx=c.getContext("2d");
+
+
+//画矩形
+ctx.fillStyle="yellow";
+ctx.fillRect(0,0,250,100)
+
+//画直线
+ctx.beginPath();
+ctx.moveTo(200,200);
+ctx.lineTo(0,0);
+ctx.strokeStyle="green";
+ctx.stroke();
+
+
+
+
+window.onclick=function ()
+{//创建一个click事件
+    var element =document.getElementById("div1");
+    var w=element.clientWidth;
+    var h=element.clientHeight;
+    var w1=document.documentElement.clientWidth;
+    var h2=document.documentElement.clientHeight;
+    var clickx=event.clientX;
+    var clicky=event.clientY;
+    console.log("clientWidth: %d,clientHeight= %d,\n documentElement.clientWidth= %d,\n documentElement.clientHeight= %d ,\nx= %d,y=%d",w,h,w1,h2,clickx,clicky);
+}
+
+</script>
+
+</body>
+</html>

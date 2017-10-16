@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>最佳工作序列</title>
+    
+</head>
+
+<body>
+      <div id="div1">
+            <table border="2" id="gettable">
+                <tr>
+                    <!--第一行-->
+                    <td>任务ID：</td>
+                    <td><input type="text" id="workID" value="1,2,3,4"></td>
+                </tr>
+                <tr>
+                    <!--第二行-->
+                    <td>任务费时：</td>
+                    <td><input type="text" id="workTIME" value="4,3,2,1"></td>
+                </tr>
+                <tr>
+                    <!--第三行-->
+                    <td>最后完成期限：</td>
+                    <td><input type="text" id="workDEADLINE" value="10,8,4,2"></td>
+                </tr>
+                <tr>
+                    <!--第四行-->
+                    <td>价值：</td> 
+                    <td><input type="text" id="workVALUE" value="2,3,3,6"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="center">
+                    <input type="button" id="workRUN" value="执行" onclick="makemain()">
+                    </td>
+                </tr>
+            </table>
+
+      </div>
+      <div id="div2">
+       <textarea name="result_text" id="result_text" cols="100" rows="30"  onpropertychange= "this.style.posHeight=this.scrollHeight ">最佳工作序列：</textarea>
+      </div>
+</body>
+
+<script type="text/javascript">
+var id=document.getElementById("workID").value;
+var id_A=new Array();//存储分割后的id
+var time=document.getElementById("workTIME").value;
+var time_A=new Array();//存储分割后的time
+var deadline=document.getElementById("workDEADLINE").value;
+var deadline_A=new Array();//存储分割后的deadline
+var wvalue=document.getElementById("workVALUE").value;
+var wvalue_A=new Array();//存储分割后的value
+var sequence=new Array();//存储最佳的路径
+var roadnum=0;//记录的路径数量
+
+function makemain()
+{//初始化一些值
+   //将字符串分割
+  var nowvalue=0;//记录第i个工作之后的已有价值
+  var lastvalue=0;//记录剩余价值
+  var t=0;//记录消耗的时间
+  var lastpoint=-1;//第i个工作点
+  var myvalue=0;//记录当前的价值
+//   var roadnum=0;//记录的路径数量
+   var colnum=0;//列数
+   id_A=id.split(",");
+   time_A=time.split(",");
+   deadline_A=deadline.split(",");
+   wvalue_A=wvalue.split(",");
+   for(var i=0;i<roadlength(id_A.length);i++)
+   {//目前不知道会有几条最佳路径？假设最多有roadlength(id_A.length)条？
+        sequence[i]=new Array();
+       for(var j=0;j<id_A.length+1;j++)
+       {//sequence[i][id_A.length+1]记录价值
+           sequence[i][j]=0;
+       }
+   }
+for(var i=0;i<id_A.length;i++)
+{//将读取的数据转为INT型
+    id_A[i]=parseInt(id_A[i]);
+    time_A[i]=parseInt(time_A[i]);
+    deadline_A[i]=parseInt(deadline_A[i]);
+    wvalue_A[i]=parseInt(wvalue_A[i]);
+}
+
+for(var j=0;j<id_A.length;j++)  
+{//按最后期限从小到大排列
+   for(var i=0;i<id_A.length-1;i++)
+      {
+         if(deadline_A[i]>deadline_A[i+1])
+         {
+           //交换id
+           var mid=id_A[i];
+           id_A[i]=id_A[i+1];
+           id_A[i+1]=mid;
+           //交换time
+           var mtime=time_A[i];
+           time_A[i]=time_A[i+1];
+           time_A[i+1]=mtime;
+           //交换deadline
+           var mdeadline=deadline_A[i]
+           deadline_A[i]=deadline_A[i+1];
+           deadline_A[i+1]=mdeadline;
+           //交换value
+           var mvalue=wvalue_A[i]
+           wvalue_A[i]=wvalue_A[i+1];
+           wvalue_A[i+1]=mvalue;
+         }
+      }
+}   
+ 
+ for(var i=0;i<wvalue_A.length;i++)
+{//计算nowvalue,lastvalue
+          nowvalue+=wvalue_A[i];
+          lastvalue+=wvalue_A[i];
+}
+       worksequence(sequence,lastvalue,nowvalue,t,lastpoint,myvalue,colnum);
+       maxvalue(sequence,roadnum);
+      console.log("\n计算结束！");
+      alert(id_A);
+   
+}
+function worksequence(sequence,lastvalue,nowvalue,t,lastpoint,myvalue,colnum)
+{//工作序列运算
+ //lastvalue=工作之后剩余价值,nowvalue=工作之后获得的价值,t=消耗时间,lastpoint=第i个工作
+     if(lastpoint==id_A.length-1||nowvalue==0)
+      {//当上一个节点是最后一个点时退出，当剩余价值为0退出
+        sequence[roadnum][id_A.length]=myvalue;//固定的一列记录总的价值
+        console.log("\n第"+roadnum+"个");
+        console.log(sequence[roadnum]);
+        for(var i=0;i<id_A.length;i++)
+        {
+            sequence[roadnum+1][i]=sequence[roadnum][i];
+        }
+        roadnum++;
+//        return;
+      }
+      for(var i=lastpoint+1;i<id_A.length;i++)
+      {
+         //当前的点是lastpoint+1
+         var mvalue=0;
+         for(var j=lastpoint+2;j<id_A.length;j++)
+         {
+               mvalue=mvalue+wvalue_A[j];
+         }
+//         lastpoint=i;
+         sequence[roadnum][colnum]=id_A[i];
+         worksequence(sequence,lastvalue-wvalue_A[i],mvalue,t+time_A[i],i,myvalue+wvalue_A[i],colnum+1);
+         sequence[roadnum][colnum]=0;
+         lastpoint=i;
+      }
+
+}
+
+function roadlength(num)
+{//假如n个数排序一共有totalnum种排列方法
+    var totalnum=1;
+    for(var i=1;i<=num;i++)
+    {
+          totalnum=totalnum*i;
+    }
+    return totalnum;
+}
+
+function maxvalue(sequence,roadnum)
+{//找到价值最大的路线输出
+var max=0;var str;
+var max_A=new Array();
+var max_num=0;
+for(var i=0;i<=roadnum;i++)
+{
+    if(max==sequence[i][id_A.length])
+    {
+        max_A[max_num]=i;
+        max_num++;
+    }
+    if(max<sequence[i][id_A.length])
+    {
+        max=sequence[i][id_A.length];
+        max_A[max_num]=i;
+        max_num++;
+    }
+}
+str="最大值为："+max+"\r\n";
+for(var i=0;i<max_A.length;i++)
+{
+    for(var j=0;j<id_A.length;j++)
+    {
+        str=str+sequence[max_A[i]][j]+">>";
+    }
+    str=str+"\r\n";
+}
+str=str+"其余所有值在console中显示";
+document.getElementById("result_text").innerText=document.getElementById("result_text").value+str; 
+
+}
+</script>
+</html>

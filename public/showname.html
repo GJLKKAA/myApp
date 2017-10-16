@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <style type="text/css">
+            #div1 {margin:auto;width:160px;height:160px;border:1px solid #f00;}
+            #div2 {margin:auto;width:160px;height:160px;border:1px solid #00FF6A;}
+            #div3 {margin:auto;width:160px;height:160px;border:1px solid #421FDF;}
+        </style>
+<head>
+    <title>矢量姓名</title>
+    
+</head>
+<body>
+    <table>
+        <tr>
+              <td>葛</td>
+              <td>婧</td>
+              <td>琳</td>
+        </tr>
+    </table>
+    <style>
+        table
+        {
+            border: 1px solid #333338;
+            width:100%;
+            text-align: center; 
+        }
+        tr
+        {
+            border: 1px solid #0906F1;
+            text-align: center; 
+        }
+        td
+        {
+            border: 1px solid #0906F1;
+            text-align: center; 
+        }
+    </style>
+    <div id="divx">
+            输入文件路径：
+            <input type="file" id="fileroad" size=100 value="G:\\17-18第一学期\\地理信息算法基础\\10-10第四课\\name.txt">
+            <input type="button" id="showgo" value="执行" onclick="showname()">
+            PS:点两下执行按钮
+    </div>
+    <table id="table1">
+        <tr >
+            <td >
+
+               <canvas id="div1" width="160"height="160" style="border:1px solid #D40A0A;">
+               </canvas>
+
+            </td>
+            <td >
+                <canvas id="div2" width="160"height="160" style="border:1px solid #0AD40A;">
+                </canvas>
+               </td>
+            <td >
+                <canvas id="div3" width="160"height="160" style="border:1px solid #095DFA;">
+                </canvas>
+               </td>
+    </tr>
+    </table>
+   <div id="x">
+            <textarea name="r_text" id="rr_text" cols="100" rows="30"  onpropertychange= "this.style.posHeight=this.scrollHeight "></textarea>
+    </div>
+
+</body>
+
+<script type="text/javascript">
+    var txtstr="";//记录txt中所有内容
+    var txtstr_A;
+    var clicknum=0;
+function showname()
+{
+    var filename=document.getElementById("fileroad").files[0];
+    var reader=new FileReader();
+    reader.readAsText(filename,"UTF-8");
+    reader.onload=function(f)
+    {
+        txtstr=event.target.result;
+        document.getElementById("rr_text").value=txtstr; 
+    }
+    clicknum=clicknum+1;
+    if(clicknum>1)
+    {
+        runnamexxx();
+    }
+}
+
+function runname()
+{
+    txtstr_A=txtstr.split("\n");
+    var linenum=0;
+    var m=txtstr_A.length-1;
+    var xx_A=new Array();
+    for(var i=0;i<txtstr_A.length;i++)
+    {
+        xx_A[i]=new Array();
+        for(j=0;j<2;j++)
+        {
+            xx_A[i][j]=0;
+        }
+    }
+    for(var i=0;i<m;i++)
+    {
+        if(String(txtstr_A[i])==String(txtstr_A[3]))
+        {
+            if(String(txtstr_A[i+1])==String(txtstr_A[3]))
+            {
+                 linenum=linenum+1;
+            }
+        }
+    }
+    linenum=linenum+1;//最后一个字的结束好像不出来
+    console.log(linenum);
+    for(var i=0;i<=m;i++)
+    {
+        if(num==parseFloat(txtstr_A[i]))
+         {
+            xx_A[i][0]=-1;//线开始
+            num++;
+            continue;
+         }
+         if(String(txtstr_A[i])==String(txtstr_A[3]))
+        {
+             xx_A[i][0]=99;//线结束
+             continue;
+        }
+        xx_A[i]=txtstr_A[i].split(",");
+        xx_A[i][0]=parseFloat(tt_A[i][0]);
+        xx_A[i][1]=parseFloat(tt_A[i][1]);
+        continue;
+    }
+    
+}
+
+function runnamexxx(txtstr_A)
+{
+    var idnum=0;//记录当前画到哪
+    txtstr_A=txtstr.split("\n");
+    var tt_A=new Array();
+    for(var i=0;i<txtstr_A.length;i++)
+    {
+        tt_A[i]=new Array();
+        for(j=0;j<2;j++)
+        {
+            tt_A[i][j]=0;
+        }
+    }
+    var num=parseInt(txtstr_A[0]);
+    var m=txtstr_A.length-1
+    for(var i=0;i<txtstr_A.length;i++)
+    {//将文件转成数字形式
+         if(isNaN(parseInt(txtstr_A[i])))
+        {//String(txtstr_A[i])==String(txtstr_A[3])
+             tt_A[i][0]=99;//线结束
+             continue;
+        }
+        tt_A[i]=txtstr_A[i].split(",");
+        tt_A[i][0]=parseFloat(tt_A[i][0]);
+        tt_A[i][1]=parseFloat(tt_A[i][1]);
+        if(isNaN(tt_A[i][1]))
+        {//当有些整数数字判断不出，再一次检查一遍
+            tt_A[i][0]=-1;//线开始
+        //    tt_A[i][1]=num;
+            num++;
+            continue;
+        }
+         continue;
+    //结束初始化
+    }
+    for(var i=0;i<3;i++)
+    {
+        var b_x=0;
+        var b_y=0;//记录div的起点
+        var c;
+        switch(i)
+        {
+          case 0:
+          b_x=getElementPos("div1").x;
+          b_y=getElementPos("div1").y;
+          c=document.getElementById("div1");
+          break;
+          case 1:
+          b_x=getElementPos("div2").x;
+          b_y=getElementPos("div2").y;
+          c=document.getElementById("div2");
+          break;
+          case 2:
+          b_x=getElementPos("div3").x;
+          b_y=getElementPos("div3").y;
+          c=document.getElementById("div3");
+          break;
+          default:
+          alert("Wrong！");
+        }
+        var ctx=c.getContext("2d");
+            ctx.beginPath();
+        for(var j=idnum;j<tt_A.length;j++)
+        {   
+            if(tt_A[j][0]==-1)
+            {
+                ctx.moveTo((tt_A[j+1][0]*10),(tt_A[j+1][1]*10));
+                j=j+1;
+                continue;
+            }
+            if(tt_A[j][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                idnum=j+1;
+                if(tt_A[j+1][0]==99)
+                {//有两个END结束
+                    idnum=j+2;
+                    break;
+                }
+                continue;
+            }
+            //既不是起点也不是END
+            ctx.lineTo((tt_A[j][0]*10),(tt_A[j][1]*10));
+        }
+        ctx.strokeStyle="#000000";
+         ctx.stroke();
+         ctx.closepath;
+    }
+
+}
+
+function getElementPos(elementId)
+{
+    var ua = navigator.userAgent.toLowerCase();
+    var isOpera = (ua.indexOf('opera') != -1);
+    var isIE = (ua.indexOf('msie') != -1 && !isOpera); // not opera spoof
+    var el = document.getElementById(elementId);
+    
+    if(el.parentNode === null || el.style.display == 'none') 
+    {
+        return false;
+    } 
+    
+         
+    var parent = null;
+    var pos = [];     
+    var box;
+         
+    if(el.getBoundingClientRect)    //IE
+    {         
+        box = el.getBoundingClientRect();
+        var scrollTop = Math.max(document.documentElement.scrollTop, document.body.scrollTop);
+        var scrollLeft = Math.max(document.documentElement.scrollLeft, document.body.scrollLeft);
+        return {x:box.left + scrollLeft, y:box.top + scrollTop};
+    }
+    else if(document.getBoxObjectFor)    // gecko    
+    {
+        box = document.getBoxObjectFor(el); 
+        var borderLeft = (el.style.borderLeftWidth)?parseInt(el.style.borderLeftWidth):0; 
+        var borderTop = (el.style.borderTopWidth)?parseInt(el.style.borderTopWidth):0; 
+        pos = [box.x - borderLeft, box.y - borderTop];
+    }
+    else    // safari & opera    
+    {
+        pos = [el.offsetLeft, el.offsetTop];  
+        parent = el.offsetParent;   
+          
+        if (parent != el) 
+        { 
+            while (parent) 
+            {  
+                pos[0] += parent.offsetLeft; 
+                pos[1] += parent.offsetTop; 
+                parent = parent.offsetParent;
+            }  
+        } 
+  
+        if (ua.indexOf('opera') != -1 || ( ua.indexOf('safari') != -1 && el.style.position == 'absolute' )) 
+        { 
+            pos[0] -= document.body.offsetLeft;
+            pos[1] -= document.body.offsetTop;         
+        }    
+    } 
+                 
+    if (el.parentNode) 
+    { 
+        parent = el.parentNode;
+    } 
+    else 
+    {
+        parent = null;
+    }
+    
+    while (parent && parent.tagName != 'BODY' && parent.tagName != 'HTML') 
+    { // account for any scrolled ancestors
+        pos[0] -= parent.scrollLeft;
+        pos[1] -= parent.scrollTop;
+        
+        if (parent.parentNode) 
+        {
+            parent = parent.parentNode;
+        } 
+        else 
+        {
+            parent = null;
+        }
+    }
+    
+    return {x:pos[0], y:pos[1]};
+}
+
+</script>
+</html>

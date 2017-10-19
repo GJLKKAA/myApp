@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>姓名的6种变换</title>
+    
+</head>
+<body>
+    <table>
+        <tr>
+              <td>葛</td>
+              <td>婧</td>
+              <td>琳</td>
+        </tr>
+    </table>
+    <style>
+        table
+        {
+            border: 1px solid #333338;
+            width:100%;
+            text-align: center; 
+        }
+        tr
+        {
+            border: 1px solid #0906F1;
+            text-align: center; 
+        }
+        td
+        {
+            border: 1px solid #0906F1;
+            text-align: center; 
+        }
+    </style>
+    <div id="divx">
+            输入文件路径：
+            <input type="file"   id="fileroad" multiple="multiple">
+            <input type="button" id="clickgo" value="读文件" onclick="readfile()">
+            <input type="button" id="showgo" value="显示原本文字" onclick="showname()">
+            <!--PS:点两下执行按钮-->
+            <input type="button" id="clear" value="清画布" onclick="clearCanvas()">
+            <input type="button" id="show_10_name" value="显示原本十倍大小的文字" onclick="showname10()">
+            <input type="button" id="show_Cell_System" value="显示网格" onclick="Draw_Cell_System()">
+            <input type="button" id="show_XY" value="显示XY轴" onclick="Draw_XY_System()">
+            <input type="button" id="show_now_name" value="当前文字" onclick="Drawname()">
+    </div>
+    <table id="table1">
+        <tr >
+            <td >
+               <canvas id="div1" width="320"height="320" style="border:1px solid #D40A0A;">
+               </canvas>
+            </td>
+            <td >
+                <canvas id="div2" width="320"height="320" style="border:1px solid #0AD40A;">
+                </canvas>
+               </td>
+            <td >
+                <canvas id="div3" width="320"height="320" style="border:1px solid #095DFA;">
+                </canvas>
+               </td>
+         </tr>
+    </table>
+    <div id="ps">
+        备注：清空画布后，先点击显示原本文字或显示十倍大小的文字，再进行字体变换。建议以原本文字大小进行变换。
+    </div>
+    <table id="table2">
+       <tr>
+           <td>
+                <input type="button" id="Transform_left" value="左斜变换" onclick="Changename_left()">
+           </td>
+       </tr>
+       <tr>
+           <td>
+                <input type="button" id="Transform_shrug" value="耸肩变换" onclick="Changename_shrug()">
+           </td>
+       </tr>
+       <tr>
+           <td>
+                输入X缩放量(-10~10)
+                <input type="number" id="symmetry_x" value="0" min="-10" max="10">
+                输入y缩放量(-10~10)
+                <input type="number" id="symmetry_y" value="0" min="-10" max="10">
+                <input type="button" id="Transform_pro" value="比例变换" onclick="Changename_pro()">
+           </td>
+       </tr>
+       <tr>
+           <td>
+               逆时针θ角(0°~360°)
+                <input type="number" id="whirl_angle" value="0" min="0" max="360">
+                <input type="button" id="Transform_whirl" value="旋转变换" onclick="Changename_whirl()">
+           </td>
+       </tr>
+       <tr>
+           <td>
+               -2=与y轴对称,-1=与x轴对称,0=原点对称,1=直线y=x对称，2=直线y=-x对称
+                <input type="number" id="symmetry" value="0" min="-2" max="2">
+                <input type="button" id="Transform_symmetry" value="对称变换" onclick="Changename_symmetry()">
+           </td>
+       </tr>
+       <tr>
+           <td>
+                输入X平移量
+                <input type="number" id="translate_x" value="0" min="-20" max="20">
+                输入Y平移量
+                <input type="number" id="translate_y" value="0" min="-20" max="20">
+                <input type="button" id="Transform_translate" value="平移变换" onclick="Changename_translate()">
+           </td>
+       </tr>
+    </table>       
+   <div id="x">
+            <textarea name="r_text" id="rr_text" cols="100" rows="30"  onpropertychange= "this.style.posHeight=this.scrollHeight "></textarea>
+    </div>
+
+</body>
+
+
+<script type="text/javascript">
+//左斜变换、耸肩变换、比例变换、旋转变换、对称变换、平移变换
+var txtstr="";//记录txt中所有内容
+var txtstr_A=new Array();
+var tt_A=new Array();
+var t_width=320;
+var t_height=320;//记录画布大小
+function showname()
+{//读取文件并显示原本的字体
+    readfile();
+    for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][0]=tt_A[i][0]+160;//var b_x=10*16;
+            tt_A[i][1]=tt_A[i][1]+144; //var b_y=9*16;
+        }
+    Drawname();
+}
+function showname10()
+{//读取文件并显示原本的字体*10
+    readfile();
+    for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][0]=tt_A[i][0]*10+160;//    var b_x=10*16;
+            tt_A[i][1]=tt_A[i][1]*10; //    var b_y=0;
+        }
+    Drawname();
+}
+
+function readfile()
+{//读取文件
+    var filename1=document.getElementById("fileroad").files[0];
+    var filename2=document.getElementById("fileroad").files[1];
+    var filename3=document.getElementById("fileroad").files[2];
+    var reader1=new FileReader();
+    reader1.readAsText(filename1,"UTF-8");
+    reader1.onload=function(f)
+    {
+        txtstr=txtstr+event.target.result;
+    }
+    var reader2=new FileReader();
+    reader2.readAsText(filename2,"UTF-8");
+    reader2.onload=function(f)
+    {
+        txtstr=txtstr+event.target.result;
+    }
+    var reader3=new FileReader();
+    reader3.readAsText(filename3,"UTF-8");
+    reader3.onload=function(f)
+    {
+        txtstr=txtstr+event.target.result;
+    }
+    document.getElementById("rr_text").value=txtstr;
+
+    //将文件内容数字化
+    txtstr_A=txtstr.split("\n");
+    for(var i=0;i<txtstr_A.length;i++)
+    {
+        tt_A[i]=new Array();
+        for(j=0;j<2;j++)
+        {
+            tt_A[i][j]=0;
+        }
+    }
+    for(var i=0;i<txtstr_A.length;i++)
+    {//将文件转成数字形式
+         if(isNaN(parseInt(txtstr_A[i])))
+        {//String(txtstr_A[i])==String(txtstr_A[3])
+             tt_A[i][0]=99;//线结束
+             continue;
+        }
+        tt_A[i]=txtstr_A[i].split(",");
+        tt_A[i][0]=parseFloat(tt_A[i][0]);
+        tt_A[i][1]=parseFloat(tt_A[i][1]);
+        if(isNaN(tt_A[i][1]))
+        {//当有些整数数字判断不出，再一次检查一遍
+            tt_A[i][0]=-1;//线开始
+            continue;
+        }
+         continue;
+    //结束初始化
+    }  
+}
+
+
+function clearCanvas()
+{//清空画布
+    var c1=document.getElementById("div1"); 
+    var c2=document.getElementById("div2");
+    var c3=document.getElementById("div3"); 
+    var cxt1=c1.getContext("2d"); 
+    var ctx2=c2.getContext("2d");
+    var ctx3=c3.getContext("2d"); 
+    cxt1.clearRect(0,0,c1.width,c1.height); 
+    ctx2.clearRect(0,0,c2.width,c2.height); 
+    ctx3.clearRect(0,0,c3.width,c3.height); 
+}
+
+function Draw_Cell_System()
+{//绘制XY轴和网格
+    var hw=16;
+    var c1=document.getElementById("div1"); 
+    var c2=document.getElementById("div2");
+    var c3=document.getElementById("div3"); 
+    var ctx1=c1.getContext("2d"); 
+    var ctx2=c2.getContext("2d");
+    var ctx3=c3.getContext("2d"); 
+    ctx1.beginPath();ctx2.beginPath();ctx3.beginPath();
+    for(var i=1;i<c1.height/hw;i++)
+    {
+        //第一个画布
+        ctx1.moveTo(0,i*hw);
+        ctx1.lineTo(c1.height,i*hw);
+        ctx1.moveTo(i*hw,0);
+        ctx1.lineTo(i*hw,c1.width);
+        //第二个画布
+        ctx2.moveTo(0,i*hw);
+        ctx2.lineTo(c2.height,i*hw);
+        ctx2.moveTo(i*hw,0);
+        ctx2.lineTo(i*hw,c2.width);
+        //第三个画布
+        ctx3.moveTo(0,i*hw);
+        ctx3.lineTo(c3.height,i*hw);
+        ctx3.moveTo(i*hw,0);
+        ctx3.lineTo(i*hw,c3.width);
+//特殊效果
+//        ctx3.moveTo(0,i*hw);
+//        ctx3.lineTo(c3.height,i*hw);
+//        ctx3.moveTo(0,i*hw);
+//        ctx3.lineTo(i*hw,c3.width);
+    }
+    //结束
+    ctx1.strokeStyle="black";ctx2.strokeStyle="black";ctx3.strokeStyle="black";
+    ctx1.stroke();ctx2.stroke();ctx3.stroke();
+}
+
+function Draw_XY_System()
+{//绘制XY轴
+    var c1=document.getElementById("div1"); 
+    var c2=document.getElementById("div2");
+    var c3=document.getElementById("div3"); 
+    var ctx1=c1.getContext("2d"); 
+    var ctx2=c2.getContext("2d");
+    var ctx3=c3.getContext("2d"); 
+    ctx1.beginPath();ctx2.beginPath();ctx3.beginPath();
+
+    //描绘箭头+XY
+    //第一个画布
+    ctx1.moveTo(0,t_height/2);ctx1.lineTo(t_width,t_height/2);ctx1.moveTo(t_width/2,0);ctx1.lineTo(t_width/2,t_height);
+    ctx1.moveTo(t_width/2,0);ctx1.lineTo(t_width/2-16,16);ctx1.moveTo(t_width/2,0);ctx1.lineTo(t_width/2+16,16);
+    ctx1.moveTo(t_width,t_height/2);ctx1.lineTo(t_width-16,t_height/2-16);ctx1.moveTo(t_width,t_height/2);ctx1.lineTo(t_width-16,t_height/2+16); 
+    //第二个画布
+    ctx2.moveTo(0,t_height/2);ctx2.lineTo(t_width,t_height/2);ctx2.moveTo(t_width/2,0);ctx2.lineTo(t_width/2,t_height);
+    ctx2.moveTo(t_width/2,0);ctx2.lineTo(t_width/2-16,16);ctx2.moveTo(t_width/2,0);ctx2.lineTo(t_width/2+16,16);
+    ctx2.moveTo(t_width,t_height/2);ctx2.lineTo(t_width-16,t_height/2-16);ctx2.moveTo(t_width,t_height/2);ctx2.lineTo(t_width-16,t_height/2+16); 
+    //第三个画布
+    ctx3.moveTo(0,t_height/2);ctx3.lineTo(t_width,t_height/2);ctx3.moveTo(t_width/2,0);ctx3.lineTo(t_width/2,t_height);
+    ctx3.moveTo(t_width/2,0);ctx3.lineTo(t_width/2-16,16);ctx3.moveTo(t_width/2,0);ctx3.lineTo(t_width/2+16,16);
+    ctx3.moveTo(t_width,t_height/2);ctx3.lineTo(t_width-16,t_height/2-16);ctx3.moveTo(t_width,t_height/2);ctx3.lineTo(t_width-16,t_height/2+16); 
+    //结束
+    ctx1.strokeStyle="black";ctx2.strokeStyle="black";ctx3.strokeStyle="black";
+    ctx1.stroke();ctx2.stroke();ctx3.stroke();
+}
+
+function Drawname()
+{//绘制显示
+    var idnum=0;//记录当前画到哪
+    for(var i=0;i<3;i++)
+    {
+        var c;
+        switch(i)
+        {
+          case 0:
+          c=document.getElementById("div1");
+          break;
+          case 1:
+          c=document.getElementById("div2");
+          break;
+          case 2:
+          c=document.getElementById("div3");
+          break;
+          default:
+          alert("Wrong！");
+        }
+        var ctx=c.getContext("2d");
+            ctx.beginPath();
+        for(var j=idnum;j<tt_A.length;j++)
+        {   
+            if(tt_A[j][0]==-1)
+            {
+                ctx.moveTo((tt_A[j+1][0]),(tt_A[j+1][1]));
+                j=j+1;
+                continue;
+            }
+            if(tt_A[j][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                idnum=j+1;
+                if(tt_A[j+1][0]==99)
+                {//有两个END结束
+                    idnum=j+2;
+                    break;
+                }
+                continue;
+            }
+            //既不是起点也不是END
+            ctx.lineTo((tt_A[j][0]),(tt_A[j][1]));
+        }
+         ctx.strokeStyle="#FF0000";
+         ctx.stroke();
+         ctx.closepath;
+    }
+}
+
+function Changename_left()
+{//左斜变换
+    var left_a=45;
+    left_a=-left_a*Math.PI/180;
+    for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            var a=tt_A[i][0];
+            tt_A[i][0]=(a-t_width/2)-(tt_A[i][1]-t_height/2)*Math.tan(left_a)+t_width/2;
+        }
+    Drawname(); 
+}
+
+function Changename_shrug()
+{//耸肩变换
+    var shrug_a=45;
+    shrug_a=shrug_a*Math.PI/180;
+    for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][1]=(tt_A[i][1]-t_height/2)-(tt_A[i][0]-t_width/2)*Math.tan(shrug_a)+t_height/2;
+        }
+    Drawname();
+}
+
+function Changename_pro()
+{//比例变换
+    var pro_change_x=parseInt(document.getElementById("symmetry_x").value);
+    var pro_change_y=parseInt(document.getElementById("symmetry_y").value);
+    if(pro_change_x>1)
+    {//x放大
+        for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][0]=(tt_A[i][0]-t_height/2)*pro_change_x+t_height/2;
+        }
+    }
+    else if(pro_change_x<-1)
+    {//x缩小
+        for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][0]=(tt_A[i][0]-t_height/2)/(-pro_change_x)+t_height/2;
+        }
+    }
+
+    if(pro_change_y>1)
+    {//y放大
+        for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][1]=(tt_A[i][1]-t_width/2)*pro_change_y+t_width/2;
+        }
+    }
+    else if(pro_change_y<-1)
+    {//y缩小
+        for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][1]=(tt_A[i][1]-t_width/2)/(-pro_change_y)+t_width/2;
+        }
+    }
+    Drawname();  
+}
+
+function Changename_whirl()
+{//旋转变换
+    var whirl_a=parseInt(document.getElementById("whirl_angle").value);
+    whirl_a=-whirl_a*Math.PI/180;
+    for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            var a=tt_A[i][0];
+            tt_A[i][0]=(a-t_width/2)*Math.cos(whirl_a)-(tt_A[i][1]-t_height/2)*Math.sin(whirl_a)+t_width/2;
+            tt_A[i][1]=(a-t_width/2)*Math.sin(whirl_a)+(tt_A[i][1]-t_height/2)*Math.cos(whirl_a)+t_height/2;
+        }
+    Drawname(); 
+}
+
+function Changename_symmetry()
+{//对称变换
+ //-2=与y轴对称,-1=与x轴对称,0=原点对称,1=直线y=x对称，2=直线y=-x对称
+ var symmetrytype=parseInt(document.getElementById("symmetry").value);
+ switch(symmetrytype)
+ {
+     case -2:
+     //关于x=160（y轴对称）
+     for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][0]=t_height-tt_A[i][0];
+        }
+     break;
+     case -1:
+     //关于y=160（x轴对称）
+     for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][1]=t_width-tt_A[i][1];
+        }
+     break;
+     case 0:
+     //关于原点对称（160，160）
+     for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][0]=t_height-tt_A[i][0];
+            tt_A[i][1]=t_width-tt_A[i][1];
+        }
+     break;
+     case 1:
+     //关于y=x对称
+     for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            var a=tt_A[i][0];
+            tt_A[i][0]=t_height-tt_A[i][1];
+            tt_A[i][1]=t_width-a;
+        }
+     break;
+     case 2:
+     //关于y=-x对称
+     for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            var a=tt_A[i][0];
+            tt_A[i][0]=tt_A[i][1];
+            tt_A[i][1]=a;
+        }
+     break;
+     default:alert("对称变换出错了！");
+ }
+ Drawname();
+
+}
+
+function Changename_translate()
+{//平移变换
+    var change_x=parseInt(document.getElementById("translate_x").value)*16;
+    var change_y=-parseInt(document.getElementById("translate_y").value)*16;
+//    document.getElementById("translate_x").value=0;
+//    document.getElementById("translate_y").value=0;
+
+        for(var i=0;i<tt_A.length;i++)
+        {   
+            if(tt_A[i][0]==-1)
+            {
+                continue;
+            }
+            if(tt_A[i][0]==99)
+            {//有END时结束当前画图，开始下一条线
+                continue;
+            }
+            tt_A[i][0]=tt_A[i][0]+change_x;
+            tt_A[i][1]=tt_A[i][1]+change_y;
+        }
+     Drawname();  
+}
+
+</script>
+
+</html>

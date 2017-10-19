@@ -76,16 +76,16 @@ function makemain()
            sequence[i][j]=0;
        }
    }
-for(var i=0;i<id_A.length;i++)
-{//将读取的数据转为INT型
+   for(var i=0;i<id_A.length;i++)
+   {//将读取的数据转为INT型
     id_A[i]=parseInt(id_A[i]);
     time_A[i]=parseInt(time_A[i]);
     deadline_A[i]=parseInt(deadline_A[i]);
     wvalue_A[i]=parseInt(wvalue_A[i]);
-}
+   }
 
-for(var j=0;j<id_A.length;j++)  
-{//按最后期限从小到大排列
+   for(var j=0;j<id_A.length;j++)  
+   {//按最后期限从小到大排列
    for(var i=0;i<id_A.length-1;i++)
       {
          if(deadline_A[i]>deadline_A[i+1])
@@ -108,17 +108,17 @@ for(var j=0;j<id_A.length;j++)
            wvalue_A[i+1]=mvalue;
          }
       }
-}   
+   }   
  
- for(var i=0;i<wvalue_A.length;i++)
-{//计算nowvalue,lastvalue
+   for(var i=0;i<wvalue_A.length;i++)
+   {//计算nowvalue,lastvalue
           nowvalue+=wvalue_A[i];
           lastvalue+=wvalue_A[i];
-}
+   }
        worksequence(sequence,lastvalue,nowvalue,t,lastpoint,myvalue,colnum);
        maxvalue(sequence,roadnum);
-      console.log("\n计算结束！");
-      alert(id_A);
+       console.log("\n计算结束！");
+       alert(id_A);
    
 }
 function worksequence(sequence,lastvalue,nowvalue,t,lastpoint,myvalue,colnum)

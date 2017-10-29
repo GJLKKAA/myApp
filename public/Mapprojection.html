@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>地图投影变换</title>
+    
+</head>
+<body>
+    <table>
+        <tr>
+            <td>
+            输入文件
+            <input type="file" id="filemap">
+            <input type="button" id="read_c_map" value="读取文件"onclick="readmap(1)">
+            <input type="button" id="show_china" value="绘制中国北京54" onclick="showchina()">
+            <input type="button" id="show_world" value="绘制世界WGS84" onclick="showworld()">
+            <!--1、根据所给的中国版图数据
+绘制显示基于北京54坐标系的经纬度数据
+编写兰勃特投影转换程序，转换上述数据，并显示
+编写墨卡托投影转换程序，转换上述数据，并显示
+同时，要绘制相对应的经纬网格，网格间距5度
+2、根据所给的世界版图数据
+绘制显示基于WGS84坐标系的经纬度数据
+编写墨卡托投影转换程序，转换上述数据，并显示
+计算北京(116.4，39.8)到巴黎(2.2, 48.52)的大圆轨迹，并显示
+同时，要绘制相对应的经纬网格，网格间距5度-->
+             </td>
+             <td>
+                <input type="button" id="clear_c" value="清空画布" onclick="clearCanvas()">
+             </td>
+        </tr>
+        <tr>
+            <td>
+            <input type="button" id="show_c_L" value="中国-兰勃特投影转换" onclick="China_L_change()"><!--onclick=-->
+            <input type="button" id="show_c_M" value="中国-墨卡托投影转换" onclick="China_M_change()"><!--onclick=-->
+            </td>
+            <td>
+                    <input type="button" id="show_world_M" value="世界-墨卡托投影转换" onclick="World_M_change()"><!--onclick=-->
+                    <input type="button" id="show_BtoP" value="北京至巴黎的大圆轨迹" onclick="World_C_Draw()">
+            </td>
+        </tr>
+    </table>
+    <table>
+            <tr >
+                    <td >
+                       <canvas id="canvas" width="1200"height="1200" style="border:1px solid #000000;">
+                       </canvas>
+                    </td>
+
+            </tr>
+    </table>
+    <style>
+            table
+            {
+                border: 1px solid #333338;
+                width:100%;
+                text-align: center; 
+            }
+            tr
+            {
+                border: 1px solid #0906F1;
+                text-align: center; 
+            }
+            td
+            {
+                border: 1px solid #000000;
+                text-align: center; 
+            }
+    </style>
+
+</body>
+
+<script type="text/javascript">
+var map=new Array();//记录地图数据
+var china_line=new Array();//记录中国地图的经纬线
+var world_line=new Array();//记录世界地图的经纬线
+var fly_line=new Array();//记录大圆航线路径
+var txtstr="";//记录txt中所有内容
+var txtstr_A=new Array();
+function readmap()
+{//读取输入
+
+    var filename=document.getElementById("filemap").files[0];
+    readfile(filename,map);
+}
+
+function readfile(filename,str_A)
+{//读取文件
+    var reader=new FileReader();
+    reader.readAsText(filename,"UTF-8");
+    reader.onload=function(f)
+    {
+        txtstr=txtstr+event.target.result;
+    }
+    txtstr_A=txtstr.split("\n");
+
+    for(var i=0;i<txtstr_A.length;i++)
+    {
+        str_A[i]=new Array();
+        for(j=0;j<2;j++)
+        {
+            str_A[i][j]=0;
+        }
+    }
+    for(var i=0;i<txtstr_A.length;i++)
+    {//将文件转成数字形式
+         if(isNaN(parseInt(txtstr_A[i])))
+        {//String(txtstr_A[i])==String(txtstr_A[3])
+            str_A[i][0]=999;//线结束
+             continue;
+        }
+        str_A[i]=txtstr_A[i].split(",");
+        str_A[i][0]=parseFloat(str_A[i][0]);
+        str_A[i][1]=parseFloat(str_A[i][1]);
+        if(isNaN(str_A[i][1]))
+        {//当有些整数数字判断不出，再一次检查一遍
+            str_A[i][0]=-1;//线开始
+            continue;
+        }
+         continue;
+    //结束初始化
+    }  
+    console.log(str_A);
+}
+
+function showchina()
+{//绘制中国北京54
+    clearCanvas();
+    readmap();
+    for(var i=0;i<220;i++)
+    {
+        china_line[i]=new Array();
+        for(var j=0;j<2;j++)
+        {
+           china_line[i][j]=0;
+        }
+    }
+    //绘制经纬网，按5°分
+    var wl=0;//纬线数
+    var jl=0;//经线数
+    for(var i=0;i<220;i++)
+    {//定义坐标轴
+          if(i<145)
+          {//定义经度x=i*30,14条,wl
+             china_line[i][0]=wl*5;china_line[i][1]=0;
+             china_line[i+1][0]=wl*5;china_line[i+1][1]=90;
+             wl++;i++;
+          }
+          if(i==145)
+          {
+              continue;
+          }
+          if(i>145)
+          {//定义纬度y=(i-14)*30，8条,jl
+             if(i<220)
+             {
+                china_line[i][0]=0;china_line[i][1]=jl*5;
+                china_line[i+1][0]=180;china_line[i+1][1]=jl*5;
+                jl++;i++;
+             }
+          }
+        
+    }
+    DrawLine(1);
+    Draw(1);
+
+}
+
+function showworld()
+{//绘制世界WGS84
+    clearCanvas();
+    readmap();
+    for(var i=0;i<220;i++)
+    {
+        world_line[i]=new Array();
+        for(var j=0;j<2;j++)
+        {
+            world_line[i][j]=0;
+        }
+    }
+    var wl=-36;//纬线数
+    var jl=-18;//经线数
+    for(var i=0;i<220;i++)
+    {//定义坐标轴
+          if(i<145)
+          {//定义经度x=i*30,14条,wl
+             world_line[i][0]=wl*5;world_line[i][1]=-90;
+             world_line[i+1][0]=wl*5;world_line[i+1][1]=90;
+             wl++;i++;
+          }
+          if(i==145)
+          {
+              continue;
+          }
+          if(i>145)
+          {//定义纬度y=(i-14)*30，8条,jl
+             if(i<220)
+             {
+                world_line[i][0]=-180;world_line[i][1]=jl*5;
+                world_line[i+1][0]=180;world_line[i+1][1]=jl*5;
+                jl++;i++;
+             }
+          }
+        
+    }
+    console.log(world_line);
+    DrawLine(2);
+    Draw(2);
+}
+
+
+function clearCanvas()
+{//清空画布
+
+      var c=document.getElementById("canvas"); 
+      var cxt=c.getContext("2d"); 
+      cxt.clearRect(0,0,c.width,c.height); 
+
+}
+
+function Draw(drawplace)
+{//依据存储值绘图,drawplace区分绘制区域
+    var c;
+    switch(drawplace)
+    {
+        case 1://绘制中国区域
+        c=document.getElementById("canvas");
+        var ctx=c.getContext("2d");
+        ctx.beginPath();
+//X:73.66666666666667-135.04166666666666 Y:3.8666666666666667-53.55
+//中心（105，29）
+        for(var j=0;j<map.length;j++)
+        {   
+            if(map[j][0]==-1)
+            {
+                ctx.moveTo((map[j+1][0])*6-30,(54-map[j+1][1])*6+126);
+                j=j+1;
+                continue;
+            }
+            if(map[j][0]==999)
+            {//有END时结束当前画图，开始下一条线
+                if(map[j+1][0]==999)
+                {//有两个END结束
+                    break;
+                }
+                continue;
+            }
+            //既不是起点也不是END
+            ctx.lineTo((map[j][0])*6-30,(54-map[j][1])*6+126);
+        }
+         ctx.strokeStyle="#FF0000";
+         ctx.stroke();
+         ctx.closepath;
+        break;
+        case 2://绘制世界区域
+        c=document.getElementById("canvas");
+        var ctx=c.getContext("2d");
+        ctx.beginPath();
+        //-90~90,180~180
+//中心（0，0）
+        for(var j=0;j<map.length;j++)
+        {   
+            if(map[j][0]==-1)
+            {
+                ctx.moveTo((map[j+1][0])*2+600,(-map[j+1][1])*2+300);
+                j=j+1;
+                continue;
+            }
+            if(map[j][0]==999)
+            {//有END时结束当前画图，开始下一条线
+                if(map[j+1][0]==999)
+                {//有两个END结束
+                    break;
+                }
+                continue;
+            }
+            //既不是起点也不是END
+            ctx.lineTo((map[j][0])*2+600,(-map[j][1])*2+300);
+        }
+         ctx.strokeStyle="#FF0000";
+         ctx.stroke();
+         ctx.closepath;
+        break;
+        default:
+        alert("Draw Wrong!");
+        break;
+    }
+
+    
+}
+
+function DrawLine(drawkind)
+{//绘制经纬线
+    switch(drawkind)
+    {
+        case 1://绘制中国区域
+        var c=document.getElementById("canvas");
+        var ctx=c.getContext("2d");
+        ctx.beginPath();
+        for(var j=0;j<china_line.length;j++)
+        { 
+            ctx.moveTo((china_line[j][0]*6-30),(china_line[j][1]*6+126));
+            ctx.lineTo((china_line[j+1][0]*6-30),(china_line[j+1][1]*6+126));
+            j=j+1;
+        }
+         ctx.strokeStyle="black";
+         ctx.stroke();
+         ctx.closepath;
+        break;
+        case 2://绘制世界区域
+        var c=document.getElementById("canvas");
+        var ctx=c.getContext("2d");
+        ctx.beginPath();
+        for(var j=0;j<world_line.length;j++)
+        { 
+            ctx.moveTo((world_line[j][0]*2+600),(world_line[j][1]*2+300));
+            ctx.lineTo((world_line[j+1][0]*2+600),(world_line[j+1][1]*2+300));
+            j=j+1;
+        }
+         ctx.strokeStyle="black";
+         ctx.stroke();
+         ctx.closepath;
+        break;
+        default:
+        alert("Draw Wrong!");
+        break;
+    }
+
+}
+
+function China_L_change()
+{//中国-兰勃特投影转换
+//a=6378245,e^2=0.006693421622966
+
+   var a=6378245;
+   var e2=0.006693421622966;
+   var e=Math.sqrt(e2);
+   var B1=20*Math.PI/180;
+   var B2=40*Math.PI/180;
+   var m_0_B1=Math.cos(B1)/Math.sqrt(1-e2*Math.pow(Math.sin(B1),2))//对原点的mB1
+   var m_0_B2=Math.cos(B2)/Math.sqrt(1-e2*Math.pow(Math.sin(B2),2))//对原点的mB2
+   var t_0_B1=Math.tan(Math.PI/4-(B1)/2)/Math.pow((1-e*Math.sin(B1))/(1+e*Math.sin(B1)),e/2);//tB1
+   var t_0_B2=Math.tan(Math.PI/4-(B2)/2)/Math.pow((1-e*Math.sin(B2))/(1+e*Math.sin(B2)),e/2);//tB2
+   var t0=Math.tan(Math.PI/4)/Math.pow((1-e*Math.sin(0))/(1+e*Math.sin(0)),e/2);//tB0
+   var n=(Math.log(m_0_B1/m_0_B2)/Math.LN10)/(Math.log(t_0_B1/t_0_B2)/Math.LN10);
+   var F=m_0_B1/(n*Math.pow(t_0_B1,n));
+   var r0=a*F*Math.pow(t0,n);
+//计算各个坐标转换之后的值
+   showchina();
+   for(var i=0;i<map.length;i++)
+   {
+       if(map[i][0]==-1)
+       {
+           continue;
+       }
+       if(map[i][0]==999)
+       {
+           continue;
+       }
+       var B=parseFloat(map[i][1]);var L=map[i][0];
+       var L_A=n*(L-105)*Math.PI/180;//L_A=θ的弧度
+       var B_p=B*Math.PI/180;//B_p=角度转弧度后的值
+       var t_L=Math.tan(Math.PI/4-(B_p)/2)/Math.pow((1-e*Math.sin(B_p))/(1+e*Math.sin(B_p)),e/2);
+       var r=a*F*Math.pow(t_L,n);
+       map[i][1]=600-(r0-r*Math.cos(L_A))/10000;
+       map[i][0]=(r*Math.sin(L_A))/10000+600;
+
+   }
+   for(var i=0;i<china_line.length;i++)
+   {
+       var B=china_line[i][1];var L=china_line[i][0];
+       var L_A=n*(L-105)*Math.PI/180;//L_A=θ的弧度
+       var B_p=B*Math.PI/180;//B_p=角度转弧度后的值
+       var t_L=Math.tan(Math.PI/4-(B_p)/2)/Math.pow((1-e*Math.sin(B_p))/(1+e*Math.sin(B_p)),e/2);
+       var r=a*F*Math.pow(t_L,n);
+       china_line[i][1]=600-(r0-r*Math.cos(L_A))/10000;
+       china_line[i][0]=(r*Math.sin(L_A))/10000+600;
+   }
+
+       console.log(china_line);
+       Draw_try(1);
+
+}
+
+function China_M_change()
+{//中国-墨卡托投影转换
+    showchina();
+   var a=6378245;
+   var b=6356863.01877;
+   var e2_2=0.006738525414684;//e2_2=e'^2
+   var e2=0.006693421622966;
+   var e=Math.sqrt(e2);
+   var K=(a*a/b)/Math.sqrt(1+e2_2*1);
+   for(var i=0;i<map.length;i++)
+   {
+       if(map[i][0]==-1)
+       {
+           continue;
+       }
+       if(map[i][0]==999)
+       {
+           continue;
+       }
+       var B=parseFloat(map[i][1])*Math.PI/180;var L=map[i][0];
+       map[i][0]=K*L;
+       map[i][1]=K*Math.log(Math.tan(Math.PI/4+B/2)*Math.pow((1-e*Math.sin(B))/(1+e*Math.sin(B)),e/2))/Math.LN10;
+       map[i][0]=map[i][0]/1000000;map[i][1]=600-map[i][1]/10000-200;
+   }
+   for(var i=0;i<china_line.length;i++)
+   {
+    var B=parseFloat(china_line[i][1])*Math.PI/180;var L=china_line[i][0];
+      china_line[i][0]=K*L;
+      china_line[i][1]=K*Math.log(Math.tan(Math.PI/4+B/2)*Math.pow((1-e*Math.sin(B))/(1+e*Math.sin(B)),e/2))/Math.LN10;
+      china_line[i][0]=china_line[i][0]/1000000;china_line[i][1]=600-china_line[i][1]/10000-200;
+   }
+
+   Draw_try(1);
+}
+
+function World_M_change()
+{//世界-墨卡托投影转换
+    showworld();
+   var a=6378137;var b=6356752.3142;
+   var e2_2=(a*a-b*b)/Math.pow(b,2);//e2_2=e'^2
+   var e2=(a*a-b*b)/Math.pow(a,2);
+   var e=Math.sqrt(e2);
+   var K=(a*a/b)/Math.sqrt(1+e2_2*1);
+   for(var i=0;i<map.length;i++)
+   {
+       if(map[i][0]==-1)
+       {
+           continue;
+       }
+       if(map[i][0]==999)
+       {
+           continue;
+       }
+       var B=parseFloat(map[i][1])*Math.PI/180;var L=map[i][0];
+       map[i][0]=K*L;
+       map[i][1]=K*Math.log(Math.tan(Math.PI/4+B/2)*Math.pow((1-e*Math.sin(B))/(1+e*Math.sin(B)),e/2))/Math.LN10;
+       map[i][0]=map[i][0]/4000000+600;map[i][1]=600-map[i][1]/40000-200;
+   }
+   for(var i=0;i<world_line.length;i++)
+   {
+      var B=parseFloat(world_line[i][1])*Math.PI/180;var L=world_line[i][0];
+      world_line[i][0]=K*L;
+      world_line[i][1]=K*Math.log(Math.tan(Math.PI/4+B/2)*Math.pow((1-e*Math.sin(B))/(1+e*Math.sin(B)),e/2))/Math.LN10;
+      world_line[i][0]=world_line[i][0]/4000000+600;world_line[i][1]=600-world_line[i][1]/40000-200;
+   }
+   Draw_try(2);
+}
+
+function World_C_Draw()
+{//绘制北京-伦敦大圆航线
+//lat=纬度B，lon=精度
+   for(var i=0;i<3;i++)
+   {//初始化航线路径
+       fly_line[i]=new Array();
+        for(var j=0;j<2;j++)
+        {
+            fly_line[i][j]=0;
+        }
+   }
+    var L1=116.4;
+    var L2=2.2;
+    var B1=39.8*Math.PI/180;
+    var B2=48.52*Math.PI/180;
+    var Bx=Math.cos(B2)*Math.cos(B2-B1);
+    var By=Math.cos(B2)*Math.sin(B2-B1);
+    var lanm=Math.atan2(Math.sin(B1)+Math.sin(B2),Math.sqrt(Math.pow(Math.cos(B1)+Bx,2)+Math.pow(By,2)));
+    var lann=L1+Math.atan2(By,Math.cos(B1)+Bx);
+  fly_line[0][0]=116.4;fly_line[0][1]=39.8;
+  fly_line[1][0]=lann;fly_line[1][1]=lanm;
+  fly_line[2][0]=2.2;fly_line[2][1]=48.52;
+   
+   
+
+
+//投影计算
+   var a=6378137;var b=6356752.3142;
+   var e2_2=(a*a-b*b)/Math.pow(b,2);//e2_2=e'^2
+   var e2=(a*a-b*b)/Math.pow(a,2);
+   var e=Math.sqrt(e2);
+   var K=(a*a/b)/Math.sqrt(1+e2_2*1);
+   for(var i=0;i<3;i++)
+   {//大圆航线墨卡托投影
+       var B=parseFloat(fly_line[i][1])*Math.PI/180;var L=fly_line[i][0];
+       fly_line[i][0]=K*L;
+       fly_line[i][1]=K*Math.log(Math.tan(Math.PI/4+B/2)*Math.pow((1-e*Math.sin(B))/(1+e*Math.sin(B)),e/2))/Math.LN10;
+       fly_line[i][0]=fly_line[i][0]/4000000+600;fly_line[i][1]=600-fly_line[i][1]/40000-200;
+   }
+   fly_line[1][0]=fly_line[2][0]+fly_line[0][0]-fly_line[1][0];
+   fly_line[1][1]=fly_line[2][1]+fly_line[0][1]-fly_line[1][1];
+     
+   console.log(fly_line);
+//绘制图像
+
+//找圆心
+
+//计算弧度
+//        var cR=Math.sqrt(Math.pow(fly_line[0][0]-cX,2)+Math.pow(fly_line[0][1]-cY,2));//半径
+//        var a1=Math.atan((fly_line[0][1]-cY)/(fly_line[0][0]-cX))*Math.PI/180;//角度1
+//        var a2=(180-Math.atan((fly_line[1][1]-cY)/(fly_line[1][0]-cX)))*Math.PI/180;//角度2
+//        var a3=(180-Math.atan((fly_line[2][1]-cY)/(fly_line[2][0]-cX)))*Math.PI/180;//角度3
+        var c=document.getElementById("canvas");
+        var ctx=c.getContext("2d");
+        ctx.beginPath();
+
+//               ctx.arc(cX,cY,cR,a1,a2,true);  //圆心x坐标,圆心y坐标,半径,起始角度,结束角度,方向:true 逆时针   false 顺时针  默认false，不写表示false
+//               ctx.arc(cX,cY,cR,a2,a3,true);
+             ctx.moveTo(fly_line[0][0],fly_line[0][1]);
+            for(var i=1;i<fly_line.length;i++)
+            {
+                ctx.lineTo(fly_line[i][0],fly_line[i][1]);
+            }
+
+        ctx.strokeStyle="#0000ff";
+        ctx.stroke();
+        ctx.closepath;
+}
+
+function findCircle(cX,cY)
+{//找圆心
+      var m1_x=(fly_line[0][0]+fly_line[1][0])/2;//A和B的中点
+      var m1_y=(fly_line[0][1]+fly_line[1][1])/2;
+      var m1_k=-(fly_line[0][0]-fly_line[1][0])/(fly_line[0][1]-fly_line[1][1]);//AB中垂线斜率
+      var m2_x=(fly_line[0][0]+fly_line[2][0])/2;//A和C的中点
+      var m2_y=(fly_line[0][1]+fly_line[2][1])/2;
+      var m2_k=-(fly_line[0][0]-fly_line[2][0])/(fly_line[0][1]-fly_line[2][1]);//AC中垂线斜率
+      var a1=m1_k;var b1=-1;var c1=-m1_k*m1_x+m1_y;//AB中垂线
+      var a2=m2_k;var b2=-1;var c2=-m2_k*m2_x+m2_y;//AC中垂线
+      cX=(b1*c2-b2*c1)/(a1*b2-a2*b1);
+      cY=(a2*c1-a1*c2)/(a1*b2-a2*b1);
+}
+
+function findflyline(L1,L2,B1,B2)
+{//找大圆航线之间的中间点坐标
+    B1=B1*Math.PI/180;
+    B2=B2*Math.PI/180;
+    var Bx=Math.cos(B2)*Math.cos(B2-B1);
+    var By=Math.cos(B2)*Math.sin(B2-B1);
+    var lanm=Math.atan2(Math.sin(B1)+Math.sin(B2),Math.sqrt(Math.pow(Math.cos(B1)+Bx,2)+Math.pow(By,2)));
+    var lann=L1+Math.atan2(By,Math.cos(B1)+Bx);
+    return [lann,lanm]
+}
+
+function Draw_try(cc)
+{//直接绘制，不做处理
+         clearCanvas();
+        var c=document.getElementById("canvas");
+        var ctx=c.getContext("2d");
+        ctx.beginPath();
+        for(var j=0;j<map.length;j++)
+        {   
+            if(map[j][0]==-1)
+            {
+                ctx.moveTo((map[j+1][0]),(map[j+1][1]));
+                j=j+1;
+                continue;
+            }
+            if(map[j][0]==999)
+            {//有END时结束当前画图，开始下一条线
+                if(map[j+1][0]==999)
+                {//有两个END结束
+                    break;
+                }
+                continue;
+            }
+            //既不是起点也不是END
+            ctx.lineTo((map[j][0]),(map[j][1]));
+        }
+         ctx.strokeStyle="#FF0000";
+         ctx.stroke();
+         ctx.closepath;
+
+         if(cc==1)
+         {
+           var c1=document.getElementById("canvas");
+           var ctx1=c1.getContext("2d");
+           ctx1.beginPath();
+           for(var j=0;j<china_line.length;j++)
+           { 
+               ctx1.moveTo((china_line[j][0]),(china_line[j][1]));
+               ctx1.lineTo((china_line[j+1][0]),(china_line[j+1][1]));
+               j=j+1;
+           }
+           ctx1.strokeStyle="black";
+           ctx1.stroke();
+           ctx1.closepath;
+         }
+         if(cc==2)
+         {
+            var c1=document.getElementById("canvas");
+           var ctx1=c1.getContext("2d");
+           ctx1.beginPath();
+           for(var j=0;j<world_line.length;j++)
+           { 
+               if(j<145)
+               {
+                ctx1.moveTo((world_line[j][0]),(0));
+                ctx1.lineTo((world_line[j+1][0]),(1200));
+                j=j+1;
+               }
+               if(j>145)
+               {
+               ctx1.moveTo((world_line[j][0]),(world_line[j][1]));
+               ctx1.lineTo((world_line[j+1][0]),(world_line[j+1][1]));
+               j=j+1;
+               }
+           }
+           ctx1.strokeStyle="black";
+           ctx1.stroke();
+           ctx1.closepath;
+         }
+
+}
+
+
+</script>
+
+</html>

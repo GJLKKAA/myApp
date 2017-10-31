@@ -77,6 +77,7 @@ var world_line=new Array();//记录世界地图的经纬线
 var fly_line=new Array();//记录大圆航线路径
 var txtstr="";//记录txt中所有内容
 var txtstr_A=new Array();
+var num=50;//num=中间点数
 function readmap()
 {//读取输入
 
@@ -453,7 +454,7 @@ function World_M_change()
 function World_C_Draw()
 {//绘制北京-伦敦大圆航线
 //lat=纬度B，lon=精度
-   for(var i=0;i<3;i++)
+   for(var i=0;i<num;i++)
    {//初始化航线路径
        fly_line[i]=new Array();
         for(var j=0;j<2;j++)
@@ -461,19 +462,19 @@ function World_C_Draw()
             fly_line[i][j]=0;
         }
    }
-    var L1=116.4;
-    var L2=2.2;
-    var B1=39.8*Math.PI/180;
-    var B2=48.52*Math.PI/180;
-    var Bx=Math.cos(B2)*Math.cos(B2-B1);
-    var By=Math.cos(B2)*Math.sin(B2-B1);
-    var lanm=Math.atan2(Math.sin(B1)+Math.sin(B2),Math.sqrt(Math.pow(Math.cos(B1)+Bx,2)+Math.pow(By,2)));
-    var lann=L1+Math.atan2(By,Math.cos(B1)+Bx);
-  fly_line[0][0]=116.4;fly_line[0][1]=39.8;
-  fly_line[1][0]=lann;fly_line[1][1]=lanm;
-  fly_line[2][0]=2.2;fly_line[2][1]=48.52;
+//    var L1=116.4;
+//    var L2=2.2;
+//    var B1=39.8*Math.PI/180;
+ //   var B2=48.52*Math.PI/180;
+//    var Bx=Math.cos(B2)*Math.cos(L2-L1);
+//    var By=Math.cos(B2)*Math.sin(L2-L1);
+//    var lanm=Math.atan2(Math.sin(B1)+Math.sin(B2),Math.sqrt(Math.pow(Math.cos(B1)+Bx,2)+Math.pow(By,2)));
+//    var lann=L1+Math.atan2(By,Math.cos(B1)+Bx)/Math.PI*180;
+     fly_line[0][0]=116.4;fly_line[0][1]=39.8;
+//      fly_line[1][0]=lann;fly_line[1][1]=lanm/Math.PI*180;
+//     fly_line[0][0]=2.2;fly_line[0][1]=48.52;
    
-   
+    findflyline(num,1,116.4,39.8,90.49612568211556,46.35319663070647);//
 
 
 //投影计算
@@ -482,15 +483,23 @@ function World_C_Draw()
    var e2=(a*a-b*b)/Math.pow(a,2);
    var e=Math.sqrt(e2);
    var K=(a*a/b)/Math.sqrt(1+e2_2*1);
-   for(var i=0;i<3;i++)
+   for(var i=0;i<num;i++)
    {//大圆航线墨卡托投影
        var B=parseFloat(fly_line[i][1])*Math.PI/180;var L=fly_line[i][0];
        fly_line[i][0]=K*L;
        fly_line[i][1]=K*Math.log(Math.tan(Math.PI/4+B/2)*Math.pow((1-e*Math.sin(B))/(1+e*Math.sin(B)),e/2))/Math.LN10;
        fly_line[i][0]=fly_line[i][0]/4000000+600;fly_line[i][1]=600-fly_line[i][1]/40000-200;
+//       if(i!=0)
+//       {
+//           if(i!=39)
+//           {
+//                fly_line[i][0]=fly_line[39][0]+fly_line[0][0]-fly_line[i][0];
+//                fly_line[i][1]=fly_line[39][1]+fly_line[0][1]-fly_line[i][1];
+//           }
+//       }
    }
-   fly_line[1][0]=fly_line[2][0]+fly_line[0][0]-fly_line[1][0];
-   fly_line[1][1]=fly_line[2][1]+fly_line[0][1]-fly_line[1][1];
+//   fly_line[1][0]=fly_line[2][0]+fly_line[0][0]-fly_line[1][0];
+//   fly_line[1][1]=fly_line[2][1]+fly_line[0][1]-fly_line[1][1];
      
    console.log(fly_line);
 //绘制图像
@@ -533,15 +542,46 @@ function findCircle(cX,cY)
       cY=(a2*c1-a1*c2)/(a1*b2-a2*b1);
 }
 
-function findflyline(L1,L2,B1,B2)
-{//找大圆航线之间的中间点坐标
+function findflyline(n,i,L1,B1,L2,B2)
+{//找大圆航线之间的中间点坐标(L1,B1)起点，（L2,B2）终点B=y，L=x
+//(116.4,39.8)中间(104.15339550538592,43.81160118898573)（90.49612568211556,46.35319663070647）(2.2,48.52)
+//假定fly_line【0~39】
     B1=B1*Math.PI/180;
     B2=B2*Math.PI/180;
-    var Bx=Math.cos(B2)*Math.cos(B2-B1);
-    var By=Math.cos(B2)*Math.sin(B2-B1);
-    var lanm=Math.atan2(Math.sin(B1)+Math.sin(B2),Math.sqrt(Math.pow(Math.cos(B1)+Bx,2)+Math.pow(By,2)));
-    var lann=L1+Math.atan2(By,Math.cos(B1)+Bx);
-    return [lann,lanm]
+    var Bx=Math.cos(B2)*Math.cos((L2-L1)*Math.PI/180);
+    var By=Math.cos(B2)*Math.sin((L2-L1)*Math.PI/180);
+    var latm=Math.atan2(Math.sin(B1)+Math.sin(B2),Math.sqrt(Math.pow(Math.cos(B1)+Bx,2)+Math.pow(By,2)))/Math.PI*180;
+
+    var lonn=L1+Math.atan2(By,Math.cos(B1)+Bx)/Math.PI*180;
+    fly_line[i][0]=lonn;
+    fly_line[i][1]=latm;
+    if(i<n/2)
+    {
+        findflyline(n,i+1,fly_line[i][0],fly_line[i][1],90.49612568211556,46.35319663070647);   
+        return 1;
+    }
+    if(i==n/2)
+    {
+        fly_line[i][0]=87.41787933950661;
+        fly_line[i][1]=48.7140686495953;
+        findflyline(n,i+1,90.49612568211556,46.35319663070647,2.2,48.52);
+        return 1;
+    }
+    if(i>n/2)
+    {
+        if(i<n-1)
+        {
+            findflyline(n,i+1,fly_line[i][0],fly_line[i][1],2.2,48.52);
+            return 1;
+        }
+        if(i==n-1)
+        {
+           fly_line[i][0]=2.2;
+           fly_line[i][1]=48.52;
+        }
+    }
+ 
+    return 1;
 }
 
 function Draw_try(cc)

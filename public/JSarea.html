@@ -22,10 +22,12 @@
         <tr>
             <td>
              <input type="button" id="MO_to_Q" value="计算经纬度-显示" onclick="MO_BL_change()"><!--onclick-->
-             <input type="button" id="S_tixing" value="经纬度坐标面积" onclick="tryarea()"><!--onclick-->
+             <input type="button" id="S_tixing" value="外接梯形的经纬度坐标面积" onclick="tryarea()"><!--onclick-->
+             <input type="button" id="S_lr" value="固定一条经线的梯形面积积分" onclick="left_right()">
              <!--
                  根据角度的球面多边形面积=S_BL_area()，梯形球面累加多边形面积=TXQM()
                  球面->平面=面积=PlanarPolygonAreaMeters2()，外接梯形面积=tryarea()
+                 固定一天经线进行计算left_right()
             -->
             </td>
         </tr>
@@ -87,6 +89,8 @@ var txtstr_A=new Array();
 var areas=new Array();//记录面积
 var BL_areas=new Array();//记录经纬度面积
 var map_center=new Array();//记录每个区域的中心点
+var left_right_eare=new Array();//记录左右面积
+var lr_x=new Array();//记录最大纬度和最小纬度对应的精度
 function readfile(filename,str_A)
 {//读取文件
     var reader=new FileReader();
@@ -193,7 +197,7 @@ function JS_area()
                 {//有两个END结束
                     break;
                 }
-                areas[A_num]=Math.abs(areas[A_num]);
+                areas[A_num]=Math.abs(areas[A_num]/2);
                 S_str=S_str+(A_num+1)+"  的面积："+areas[A_num]+"\r\n";
                 A_num=A_num+1;
                 areas[A_num]=0;
@@ -532,14 +536,30 @@ function findmin(a,b,c,d)
 
 function area_BLarea()
 {//反映平面-球面
-    var areastr="平面-球面面积的差：\r\n";
-    for(var i=0;i<areas.length;i++)
-    {
-        areastr=areastr+"第"+i+"个："+(areas[i]-BL_areas[i])+"\r\n";
-    }
-    document.getElementById("rr_text").value="";
-    document.getElementById("rr_text").value=areastr;
+
+    
+//BL_area
+        var str2="平面-球面外接梯形面积的差(area-BL_areas)（平方千米）：\r\n";
+        for(var i=0;i<BL_areas.length;i++)
+       {
+        str2=str2+"第"+i+"个："+(areas[i]-BL_areas[i])/1000000+"\r\n";
+        }
+        document.getElementById("rr_text").value="";
+        document.getElementById("rr_text").value=str2;
 }
+
+function area_lrarea()
+{
+//计算积分梯形的面积差
+       var str1="平面-球面梯形累加面积的差（area-left_right_eare）(平方千米)：\r\n";
+       for(var i=0;i<areas.length;i++)
+       {
+           str1=str1+"第"+i+"个："+(areas[i]-left_right_eare[i])/1000000+"\r\n";
+       }
+       document.getElementById("rr_text").value="";
+       document.getElementById("rr_text").value=str1;
+}
+
 
 /*球面->平面=面积*/
 function PlanarPolygonAreaMeters2()
@@ -591,6 +611,7 @@ function PlanarPolygonAreaMeters2()
 /*外接梯形面积*/
 function tryarea()
 {//测试
+//外接梯形面积
   //记录起点
     var cnum=0;//记录当前是第几个面积
     var max=0;var min=0;var left=0;var right=0;
@@ -639,8 +660,138 @@ function tryarea()
 
     }
     console.log(BL_areas);
-    //显示面积差
-        area_BLarea();
+//显示面积差
+area_BLarea();
+//计算总面积
+conarea();
+}
+
+function left_right()
+{//固定一条经线
+//初始化left_right_eare面积
+  for(var i=0;i<areas.length;i++)
+  {
+      left_right_eare[i]=0;
+  }
+     
+//初始化lr_x,0=min,1=max,2=right
+     for(var i=0;i<areas.length;i++)
+     {
+         lr_x[i]=new Array();
+         for(var j=0;j<3;j++)
+         {
+             lr_x[i][j]=0;
+         }
+     }
+//找lr_x
+     var lr_num=0;
+     for(var i=0;i<map.length;i++)
+    {
+        if(map[i][0]==-1)
+        {
+            var y_max=map[i+1][1];
+            var y_min=map[i+1][1];
+            lr_x[lr_num][0]=map[i+1][0];
+            lr_x[lr_num][1]=map[i+1][0];
+            lr_x[lr_num][2]=map[i+1][0];
+            continue;
+        }
+        if(map[i][0]==999)
+        {
+            if(lr_x[lr_num][0]>lr_x[lr_num][1])
+            {
+                var c=lr_x[lr_num][0];
+                lr_x[lr_num][0]=lr_x[lr_num][1];
+                lr_x[lr_num][1]=c;
+            }
+           
+            lr_num++;
+            if(map[i+1][0]==999)
+            {
+                break;
+            }
+            continue;
+        }
+        if(map[i][1]>y_max)
+        {
+            y_max=map[i][1];
+            lr_x[lr_num][0]=map[i][0];
+        }
+        if(map[i][1]<y_min)
+        {
+            y_min=map[i][1];
+            lr_x[lr_num][1]=map[i][0];
+        }
+        if(map[i][0]>lr_x[lr_num][2])
+        {//记录right值
+            lr_x[lr_num][2]=map[i][0];
+        }
+    }
+
+console.log(lr_x);
+//计算面积
+lr_num=0;
+var snum=0;//有几块面积
+var Boundary=0;
+for(var i=0;i<map.length;i++)
+    {
+        if(map[i+1][0]==999)
+        {
+            lr_num++;
+            snum++;
+            if(map[i+2][0]==999)
+            {
+                break;
+            }
+            continue;
+        }
+        if(map[i][0]==-1)
+        {
+            Boundary=(lr_x[lr_num][0]+lr_x[lr_num][1])/2;
+            continue;
+        }
+
+       //i和i+1,ccarea(B,L,dB,dL)
+       if(map[i][0]<=Boundary&&map[i+1][0]<=Boundary)
+       {//++
+            var lr_b=map[i][1];var lr_tb=Math.abs(map[i+1][1]-map[i][1]);
+            var lr_l=(map[i][0]+map[i+1][0])/2;var lr_tl=Math.abs(lr_x[lr_num][2]-lr_l);
+            left_right_eare[snum]=left_right_eare[snum]+ccarea(lr_b,lr_l,lr_tb,lr_tl);
+       }
+       if(map[i][0]>Boundary&&map[i+1][0]>Boundary)
+       {//--
+            var lr_b=map[i][1];var lr_tb=Math.abs(map[i+1][1]-map[i][1]);
+            var lr_l=(map[i][0]+map[i+1][0])/2;var lr_tl=Math.abs(lr_x[lr_num][2]-lr_l);
+            left_right_eare[snum]=left_right_eare[snum]-ccarea(lr_b,lr_l,lr_tb,lr_tl);
+       }
+    }
+    console.log(left_right_eare);
+//反映一些面积差
+area_lrarea();
+conarea();
+
+}
+
+function conarea()
+{//对比一些面积
+   var s_tp=0;//投影下的面积
+    for(var i=0;i<areas.length;i++)
+  {
+       s_tp+=areas[i]/1000000;
+  }
+  alert("areas（平方千米）:"+s_tp);
+  s_tp=0;
+  for(var i=0;i<left_right_eare.length;i++)
+  {
+      s_tp+=left_right_eare[i]/1000000;
+  }
+  alert("left_right_eare（平方千米）:"+s_tp);
+  s_tp=0;
+  for(var i=0;i<BL_areas.length;i++)
+  {
+      s_tp+=BL_areas[i]/1000000;
+  }
+  alert("BL_areas（平方千米）:"+s_tp);
 }
 
     </script>
